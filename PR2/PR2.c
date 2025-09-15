@@ -1,18 +1,18 @@
+#include <math.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <math.h>
-#ifdef __GLIBC__
-    #include <stdio_ext.h>
-#else 
+#ifdef _WIN32
     #include <conio.h>
+#else
+    #include <stdio_ext.h>
 #endif
 
 #define MAX_LENGTH 1e12
 #define MIN_LENGTH 1e-5
 #define MAX_DIGITS 12
 
-bool loop();
+void loop();
 double lineInput(char *);
 short precisionInput();
 bool endInput();
@@ -27,11 +27,11 @@ double bisector(double, double, double);
 
 int main() {
     printf("This is a program for calculating several triangle parameters (perimeter, area, heights, medians and bisectors) based on its sides.\nYou can exit the program by pressing Ctrl+D anytime.\n");
-    while(!loop()){;}
+    do {loop();} while (!endInput());
     return 0;
 }
 
-bool loop() {
+void loop() {
     double a = 0;
     double b = 0;
     double c = 0;
@@ -62,8 +62,6 @@ bool loop() {
     printf("Bisector AL_1 of ABC: %.*f\n", precision, bisector(a, b, c));
     printf("Bisector BL_2 of ABC: %.*f\n", precision, bisector(b, a, c));
     printf("Bisector CL_3 of ABC: %.*f\n", precision, bisector(c, a, b));
-
-    return endInput();
 }
 
 double lineInput(char *lineName){

@@ -1,5 +1,5 @@
-#include <stdio.h>
 #include <math.h>
+#include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #ifdef _WIN32
@@ -12,7 +12,7 @@
 #define MAX_DIGITS 10
 
 
-bool loop();
+void loop();
 unsigned short kInput();
 double xInput(bool);
 double eInput();
@@ -23,11 +23,11 @@ double root(double x, unsigned short k, double e);
 
 int main() {
     printf("Program for calculating square roots up to a certain precision. You can exit at any time by pressing Ctrl+D\n");
-    while(!loop());
+    do {loop();} while (!endInput());
     return 0;
 }
 
-bool loop() {
+void loop() {
     unsigned short k = 0;
     printf("Enter k (must be a positive integer less than or equal to %d): ", MAX_K);
     while(!((k = kInput()))) {printf("Please enter a positive integer in the specified range [1, %d]: ", MAX_K);}
@@ -42,8 +42,6 @@ bool loop() {
 
     short precision = -log10(e) + 1;
     printf("The final root value is %.*lf\n", precision, root(x, k, e));
-
-    return endInput();
 }
 
 unsigned short kInput() {
