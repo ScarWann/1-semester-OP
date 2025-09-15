@@ -29,7 +29,7 @@ int main() {
 
 bool loop() {
     unsigned short k = 0;
-    printf("Enter k (must be a positive integer less than or equal to %d, values closer to %d give increasingly less accurate results): ", MAX_K, MAX_K);
+    printf("Enter k (must be a positive integer less than or equal to %d): ", MAX_K);
     while(!((k = kInput()))) {printf("Please enter a positive integer in the specified range [1, %d]: ", MAX_K);}
 
     double x = 0;
