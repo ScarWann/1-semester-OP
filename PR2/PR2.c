@@ -139,7 +139,7 @@ double area(double a, double b, double c) {
 }
 
 double height(double oppositeLength, double secondaryLength1, double secondaryLength2) {
-    return 2 * area(oppositeLength, secondaryLength1, secondaryLength2) / oppositeLength;
+    return area(oppositeLength, secondaryLength1, secondaryLength2) * 2 / oppositeLength;
 }
 
 double median(double oppositeLength, double secondaryLength1, double secondaryLength2) {
@@ -148,6 +148,6 @@ double median(double oppositeLength, double secondaryLength1, double secondaryLe
 
 double bisector(double oppositeLength, double secondaryLength1, double secondaryLength2) {
     double p = (oppositeLength + secondaryLength1 + secondaryLength2) / 2;
-    return 2 * sqrt(secondaryLength1 * secondaryLength2 * p * (p - oppositeLength)) / (secondaryLength1 + secondaryLength2);
+    return sqrt(secondaryLength1 * secondaryLength2 * p * (p - oppositeLength)) * 2 / (secondaryLength1 + secondaryLength2);
 }
 
