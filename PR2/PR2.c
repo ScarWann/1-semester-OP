@@ -8,9 +8,9 @@
     #include <stdio_ext.h>
 #endif
 
-#define MAX_LENGTH 1e12
+#define MAX_LENGTH 1e6
 #define MIN_LENGTH 1e-5
-#define MAX_DIGITS 12
+#define MAX_DIGITS 8
 
 void loop();
 double lineInput(char *);
@@ -20,7 +20,7 @@ double input();
 void flush_stdin();
 bool validTriangle(double, double, double);
 double perimeter(double, double, double);
-double area(double, double, double);
+long double area(double, double, double);
 double height(double, double, double);
 double median(double, double, double);
 double bisector(double, double, double);
@@ -42,31 +42,31 @@ void loop() {
     while(!(c = lineInput("AB"))){;}
     if(!validTriangle(a, b, c)) {
         printf("The sides do not form a valid triangle. Please reenter the numbers correctly\n");
-        return 0;
+        return;
     }
 
     printf("Please enter the amount of digits after the comma in the output (max %d): ", MAX_DIGITS);
     while(!(precision = precisionInput())){printf("Invalid input. Try again: ");}
 
-    printf("Perimeter of ABC: %.*f\n", precision, perimeter(a, b, c));
-    printf("Area of ABC: %.*f\n", precision, area(a, b, c));
+    printf("Perimeter of ABC: %.*lf\n", precision, perimeter(a, b, c));
+    printf("Area of ABC: %.*Lf\n", precision, area(a, b, c));
     
-    printf("Height AH_1 of ABC: %.*f\n", precision, height(a, b, c));
-    printf("Height BH_2 of ABC: %.*f\n", precision, height(b, a, c));
-    printf("Height CH_3 of ABC: %.*f\n", precision, height(c, a, b));
+    printf("Height AH_1 of ABC: %.*lf\n", precision, height(a, b, c));
+    printf("Height BH_2 of ABC: %.*lf\n", precision, height(b, a, c));
+    printf("Height CH_3 of ABC: %.*lf\n", precision, height(c, a, b));
 
-    printf("Median AM_1 of ABC: %.*f\n", precision, median(a, b, c));
-    printf("Median BM_2 of ABC: %.*f\n", precision, median(b, a, c));
-    printf("Median CM_3 of ABC: %.*f\n", precision, median(c, a, b));
+    printf("Median AM_1 of ABC: %.*lf\n", precision, median(a, b, c));
+    printf("Median BM_2 of ABC: %.*lf\n", precision, median(b, a, c));
+    printf("Median CM_3 of ABC: %.*lf\n", precision, median(c, a, b));
 
-    printf("Bisector AL_1 of ABC: %.*f\n", precision, bisector(a, b, c));
-    printf("Bisector BL_2 of ABC: %.*f\n", precision, bisector(b, a, c));
-    printf("Bisector CL_3 of ABC: %.*f\n", precision, bisector(c, a, b));
+    printf("Bisector AL_1 of ABC: %.*lf\n", precision, bisector(a, b, c));
+    printf("Bisector BL_2 of ABC: %.*lf\n", precision, bisector(b, a, c));
+    printf("Bisector CL_3 of ABC: %.*lf\n", precision, bisector(c, a, b));
 }
 
 double lineInput(char *lineName){
     double length;
-    printf("Please enter the value of line %s (%f to %.0f): ", lineName, MIN_LENGTH, MAX_LENGTH);
+    printf("Please enter the value of line %s (%.0e to %.0e): ", lineName, MIN_LENGTH, MAX_LENGTH);
     length = input();
     if (!(MIN_LENGTH <= length && length <= MAX_LENGTH)) {
         printf("Invalid input. Try again. ");
@@ -85,7 +85,6 @@ short precisionInput() {
 }
 
 bool endInput() {
-    short success = 0;
     char ch;
     printf("Press Ctrl+D to end program. Enter any key to continue: ");
     ch = getchar();
@@ -131,9 +130,9 @@ double perimeter(double a, double b, double c) {
     return a + b + c;
 }
 
-double area(double a, double b, double c) {
-    double p = (a + b + c) / 2;
-    return sqrt(p * (p - a) * (p - b) * (p - c));
+long double area(double a, double b, double c) {
+    long double p = (a + b + c) / 2;
+    return sqrtl(p * (p - a) * (p - b) * (p - c));
 }
 
 double height(double oppositeLength, double secondaryLength1, double secondaryLength2) {
