@@ -10,8 +10,8 @@
 
 #define MAX_LENGTH 1e9
 #define MIN_LENGTH 1e-4
-#define MAX_DIGITS_OUT 12
-#define MAX_DIGITS_IN 12
+#define MAX_DIGITS_OUT 14
+#define MAX_DIGITS_IN 14
 #define COMPARISON_EPSILON 1e-9
 
 #define STRINGIFY(x) #x
@@ -33,7 +33,7 @@ double bisector(double, double, double);
 int main() {
     printf("This is a program for calculating several triangle parameters (perimeter, area, heights, medians and bisectors) based on its sides.\n"
            "You can exit the program by pressing Ctrl+D anytime.\n"
-           "Only first %d symbols accepted in the input, the rest are discarded.\n", MAX_DIGITS_IN);
+           "Only first %d symbols accepted in the input, the rest are discarded. Keep in mind that this may discard the exponent if you're inputting in the exponential form\n", MAX_DIGITS_IN);
     do {
         loop();
     } while (!endInput());
