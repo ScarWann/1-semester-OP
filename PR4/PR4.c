@@ -30,9 +30,9 @@ float max(float, float);
 double taylorSin(float, float);
 
 int main() {
-    printf("Program for calculating sin(x) with precision e using the Taylor series.\n");
-    printf("You can press Ctrl+D to end the program at any time.\n");
-    printf("x1 and x2 are interchangable, their order of input and relation doesn't matter\n");
+    printf("Program for calculating sin(x) with precision e using the Taylor series.\n"
+           "You can press Ctrl+D to end the program at any time.\n"
+           "x1 and x2 are interchangable, their order of input and relation doesn't matter\n");
     do {loop();} while (!endInput());
     return 0;
 }
