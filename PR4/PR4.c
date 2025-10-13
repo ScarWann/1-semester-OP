@@ -14,16 +14,15 @@
 #define MAX_X 1e3
 #define MIN_D 1e-4
 #define MAX_D 1e3
-#define MIN_E 1e-8
+#define MIN_E 1e-7
 #define MAX_E 1e-3
 
 void loop();
 bool validX(float);
 bool validDelta(float);
 bool validEpsilon(float);
-bool conditionalInput(float*, bool (*)(float));
 bool endInput();
-float input();
+float extraScanf();
 void flush_stdin();
 float min(float, float);
 float max(float, float);
@@ -33,26 +32,36 @@ int main() {
     printf("Program for calculating sin(x) with precision e using the Taylor series.\n"
            "You can press Ctrl+D to end the program at any time.\n"
            "x1 and x2 are interchangable, their order of input and relation doesn't matter\n");
-    do {loop();} while (!endInput());
+    do {
+        loop();
+    } while (!endInput());
     return 0;
 }
 
 void loop() {
     float x1 = 0;
     printf("Enter x1 (in degrees) in range [%.0e, %.0e]: ", MIN_X, MAX_X);
-    while (!conditionalInput(&x1, &validX)) {}
+    do {
+        x1 = extraScanf();
+    } while (!validX(x1));
 
     float x2 = 0;
     printf("Enter x2 (in degrees) in range [%.0e, %.0e]: ", MIN_X, MAX_X);
-    while (!conditionalInput(&x2, &validX)) {}
+    do {
+        x2 = extraScanf();
+    } while (!validX(x2));
 
     float d = 0;
     printf("Enter step d (in degrees) in range [%.0e, %.0e]: ", MIN_D, MAX_D);
-    while (!conditionalInput(&d, &validDelta)) {}
+    do {
+        d = extraScanf();
+    } while (!validDelta(d));
 
     float e = 0;
     printf("Enter precision e in range [%.0e, %.0e]: ", MIN_E, MAX_E);
-    while (!conditionalInput(&e, &validEpsilon)) {}
+    do {
+        e = extraScanf();
+    } while (!validEpsilon(e));
 
     float minX = min(x1, x2);
     float maxX = max(x1, x2);
@@ -80,25 +89,26 @@ void loop() {
 }
 
 bool validX(float x) {
-    return fabs(x) <= MAX_X && fabs(x) >= MIN_X;
+    if (!(fabs(x) <= MAX_X && fabs(x) >= MIN_X)) {
+        printf("Please enter x in the valid range: ");
+        return false;
+    }
+    return true;
 }
 
 bool validDelta(float d) {
-    return fabs(d) <= MAX_D && fabs(d) >= MIN_D;
+    if (!(fabs(d) <= MAX_D && fabs(d) >= MIN_D)) {
+        printf("Please enter d in the valid range: ");
+        return false;
+    }
+    return true;
 }
 
 bool validEpsilon(float e) {
-    return e <= MAX_E && e >= MIN_E;
-}
-
-bool conditionalInput(float *var, bool (*condition)(float)) {
-    float temp = 0;
-    temp = input();
-    if (!((temp == temp) && condition(temp))){
-        printf("Invalid input. Try again: ");
+    if (!(e <= MAX_E && e >= MIN_E)) {
+        printf("Please enter e in the valid range: ");
         return false;
     }
-    *var = temp;
     return true;
 }
 
@@ -114,7 +124,7 @@ bool endInput() {
     return 0;
 }
 
-float input() {
+float extraScanf() {
     short success = 0;
     float result = 0;
     success = scanf("%f", &result);
@@ -122,7 +132,7 @@ float input() {
         printf("End of input detected. Closing program.\n");
         exit(0);
     } else if (!success){
-        result = NAN;
+        result = 0./0.;
     }
     flush_stdin();
     return result;

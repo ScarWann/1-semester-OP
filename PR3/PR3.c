@@ -9,21 +9,18 @@
 #endif
 
 
-#define MAX_X_RAW 1e304
-#define MIN_E_RAW 1e-14
-
+#define MAX_X 1e304
+#define MIN_E 1e-16
 #define MAX_K 1e6
 
-#define MAX_X nexttoward(MAX_X_RAW, INFINITY)
-#define MIN_E nexttoward(MIN_E_RAW, -INFINITY)
 
 void loop();
 bool validK(double);
-bool validX(double, short);
+bool validX(double, double, short);
 bool validE(double);
 bool endInput();
 double extraScanf();
-void flush_stdin();
+void flushStdin();
 double root(double, int, double, unsigned short);
 
 int main() {
@@ -36,16 +33,15 @@ int main() {
 }
 
 void loop() {
-    double temp = 0;
 
     double e = 0;
-    printf("Enter epsilon (must be a positive number in range [%.0le, 0.1], prefferably a negative power of 10 (i.e. 1e-6)): ", MIN_E);
+    printf("Enter epsilon (must be a positive number in range [%.0le, 0.1], prefferably in exponential form (i.e. 1e-6)): ", MIN_E);
     do {
-        temp = extraScanf();
-    } while (!validE(temp));
-    e = temp;
-    unsigned short precision = -log10(e) + 1;
+        e = extraScanf();
+    } while (!validE(e));
+    unsigned short precision = -log10(e);
     
+    double temp = 0;
     int k = 0;
     printf("Enter k (must be an integer less than or equal to %.0e): ", MAX_K);
     do {
@@ -54,11 +50,10 @@ void loop() {
     k = (int)temp;
 
     double x = 0;
-    printf("Enter x (must have a square root of power %d and be less than %.0e): ", k, MAX_X);
+    printf("Enter x (must have a square root of power %d and be in range [%.0e, %.0e]): ", k, e, MAX_X);
     do {
-        temp = extraScanf();
-    } while (!validX(temp, k));
-    x = temp;
+        x = extraScanf();
+    } while (!validX(x, e, k));
 
     if (x && x != 1) {
         printf("The final root value is %.*lf\n", precision, root(x, k, e, precision));
@@ -75,8 +70,8 @@ bool validK(double k) {
     return true;
 }
 
-bool validX(double x, short k) {
-    if (!(fabs(x) < MAX_X)) {
+bool validX(double x, double e, short k) {
+    if (!(fabs(x) <= MAX_X && fabs(x) >= e)) {
         printf("Please enter a number that has the specified root in the valid range: ");
         return false;
     } else if (k > 0 && (k % 2 == 0) && (x < 0)) {
@@ -95,7 +90,7 @@ bool validX(double x, short k) {
 }
 
 bool validE(double e) {
-    if (!(e < 0.1 && e > MIN_E)) {
+    if (!(0.1 >= e && e >= MIN_E)) {
         printf("Please enter a number in the specified range: ");
         return false;
     }
@@ -110,7 +105,7 @@ bool endInput() {
         printf("End of input detected. Closing program.\n");
         return 1;
     }
-    flush_stdin();
+    flushStdin();
     return 0;
 }
 
@@ -122,13 +117,13 @@ double extraScanf() {
         printf("End of input detected. Closing program.\n");
         exit(0);
     } else if (!success){
-        result = NAN;
+        result = 0./0.;
     }
-    flush_stdin();
+    flushStdin();
     return result;
 }
 
-void flush_stdin() {
+void flushStdin() {
 #ifdef _WIN32
     fflush(stdin);
 #elif defined(__linux__)
