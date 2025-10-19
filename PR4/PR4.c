@@ -10,12 +10,13 @@
 
 #define M_PI 3.14159265358979323846
 
-#define MIN_X 1e-4
+#define MIN_X 1e-2
 #define MAX_X 1e3
-#define MIN_D 1e-4
+#define MIN_D 1e-2
 #define MAX_D 1e3
 #define MIN_E 1e-7
 #define MAX_E 1e-3
+#define COMPARISON_EPSILON 1e-8
 
 void loop();
 bool validX(float);
@@ -23,6 +24,8 @@ bool validDelta(float);
 bool validEpsilon(float);
 bool endInput();
 float extraScanf();
+void printHeaders(int);
+void printRow(int, int, float, float, float, float);
 void flush_stdin();
 float min(float, float);
 float max(float, float);
@@ -31,7 +34,7 @@ double taylorSin(float, float);
 int main() {
     printf("Program for calculating sin(x) with precision e using the Taylor series.\n"
            "You can press Ctrl+D to end the program at any time.\n"
-           "x1 and x2 are interchangable, their order of input and relation doesn't matter\n");
+           "x1 and x2 are interchangable, their order of input or relation doesn't matter\n");
     do {
         loop();
     } while (!endInput());
@@ -72,24 +75,25 @@ void loop() {
         x = maxX;
     }
 
-    unsigned int digits = (unsigned int)-log10f(e) + 1;
+    unsigned int digits = (unsigned int)-log10f(e);
     int spacing = digits + 10;
     double mathhResult = 0;
     double taylorResult = 0;
     double deltaError = 0;
     
-    printf("%-*s %-*s %-*s %-*s\n", spacing, "--x--", spacing, "--sin(x)--", spacing, "--taylorSin(x)--", spacing, "--taylorSin(x) - sin(x)--");
+    printHeaders(spacing);
     do {
         mathhResult = sin(M_PI * x / 180);
         taylorResult = taylorSin(x, e);
         deltaError = taylorResult - mathhResult;
-        printf("%-*f %-*.*lf %-*.*lf %-*.*e\n", spacing, x, spacing, digits, mathhResult, spacing, digits, taylorResult, spacing, digits, deltaError);
+        printRow(spacing, digits, x, mathhResult, taylorResult, deltaError);
         x += d;
     } while (x <= maxX && x >= minX);
+    printHeaders(spacing);
 }
 
 bool validX(float x) {
-    if (!(fabs(x) <= MAX_X && fabs(x) >= MIN_X)) {
+    if (!(fabs(x) - MAX_X <= COMPARISON_EPSILON && MIN_X - fabs(x) <= COMPARISON_EPSILON))  {
         printf("Please enter x in the valid range: ");
         return false;
     }
@@ -97,7 +101,7 @@ bool validX(float x) {
 }
 
 bool validDelta(float d) {
-    if (!(fabs(d) <= MAX_D && fabs(d) >= MIN_D)) {
+    if (!(fabs(d) - MAX_D <= COMPARISON_EPSILON && MIN_D - fabs(d) <= COMPARISON_EPSILON)) {
         printf("Please enter d in the valid range: ");
         return false;
     }
@@ -105,7 +109,7 @@ bool validDelta(float d) {
 }
 
 bool validEpsilon(float e) {
-    if (!(e <= MAX_E && e >= MIN_E)) {
+    if (!(fabs(e) - MAX_E <= COMPARISON_EPSILON && MIN_E - fabs(e) <= COMPARISON_EPSILON))  {
         printf("Please enter e in the valid range: ");
         return false;
     }
@@ -136,6 +140,20 @@ float extraScanf() {
     }
     flush_stdin();
     return result;
+}
+
+void printHeaders(int spacing) {
+    printf("%-*s|", spacing, "--x--");
+    printf("%-*s|", spacing, "--sin(x)--");
+    printf("%-*s|", spacing, "--taylorSin(x)--");
+    printf("%-*s\n", spacing, "--taylorSin(x) - sin(x)--");
+}
+
+void printRow(int spacing, int digits, float x, float sin, float taylorSin, float deltaError) {
+    printf("%-*.2f|", spacing, x);
+    printf("%-*.*f|", spacing, digits, sin);
+    printf("%-*.*f|", spacing, digits, taylorSin);
+    printf("%-*.*e\n", spacing, digits, deltaError);
 }
 
 void flush_stdin() {
