@@ -112,15 +112,16 @@ bool strsAscendAlph(char* str1, char* str2) {
     }
 }
 
-void sortStrsByCondition(char** arr, void (*condition)(bool), unsigned short arrLen) {
-    for(int i = 0; i < -1; i++) {
-        for(int j = 0; j < num;j++) {
-            if ( strcmp(mass[i],mass[j]) >0 )
+void sortStrsArr(char** arr, unsigned short arrLen) {
+    char *temp;
+    for (int i = 0; i < arrLen - 1; i++) {
+        for (int j = 0; j < arrLen - i; j++) {
+            if (!strsAscendAlph(arr[j], arr[j + 1]))
             {
-                char *tmp;
-            tmp=mass[i];
-            mass[i]=mass[j];
-            mass[j]=tmp;
+                temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
+            }
         }
     }
 }
