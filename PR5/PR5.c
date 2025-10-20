@@ -16,11 +16,18 @@ void loop();
 bool validArrLen(unsigned short var, short success);
 bool validStrLen(unsigned short var, short success);
 bool validStr(char* str, unsigned short len, short success);
+void cutStr(char** str, unsigned short len);
+void exitWithMsg();
+void printIndexedStrs(char** arr, unsigned short arrLen, unsigned short strLen);
+bool strsAscendAlph(char* str1, char* str2);
+void sortStrsArr(char** arr, unsigned short arrLen);
 bool endInput();
-void flush_stdin();
+void flushStdin();
 
 int main() {
     printf("Program for sorting strings in alphabetical order.\n"
+           "Entering extra chars will automatically cut them.\n"
+           "Entering less chars than specified will treat the empty spaces as char 0 ('\\0')\n"
            "You can press Ctrl+D to end the program at any time.\n");
     do {
         loop();
@@ -30,78 +37,90 @@ int main() {
 
 void loop() {
     short success = 0;
-    unsigned short arrLen = 0;
-    printf("Enter the amount of compared strings (must be an integer less than %d): ", MAX_ARR_LEN);
+    short unsigned arrLen = 0;
+    printf("Enter the amount of compared strings (must be an integer less than or equal to %d): ", MAX_ARR_LEN);
     do {
-        success = scanf("%u", arrLen);
+        success = scanf("%hu", &arrLen);
+        flushStdin();
     } while (!(validArrLen(arrLen, success)));
 
-    unsigned short strLen = 0;
-    printf("Enter the length of compared strings (must be an integer less than %d): ", MAX_ARR_LEN);
+    short unsigned strLen = 0;
+    printf("Enter the length of compared strings (must be an integer less than or equal to %d): ", MAX_STR_LEN);
     do {
-        success = scanf("%zi", strLen);
+        success = scanf("%hu", &strLen);
+        flushStdin();
     } while (!(validStrLen(strLen, success)));
 
-    char arr[arrLen][strLen];
+    char **arr = (char**)malloc(arrLen * (strLen + 1) * 4 * sizeof(char)); // Додаткове місце для \n й 4 байта для включення всіх символів UTF-8
     for (int i = 0; i < arrLen; i++) {
-        printf("Enter string number %d: ", i);
+        arr[i] = (char*)malloc((strLen + 1) * 4 * sizeof(char));
+        printf("Enter string number %d: ", i + 1);
         do {
-            success = scanf("%s", &arr[i]);
-        } while (!validStr(arr[i], strLen, success));
+            //success = scanf("%s", arr[i]);
+            fgets(arr[i], strLen + 1, stdin);
+            flushStdin();
+            //cutStr(&arr[i], strLen);
+        } while (0/*!validStr(arr[i], strLen, success*/);
     }
     
+    sortStrsArr(arr, arrLen);
 
+    printIndexedStrs(arr, arrLen, strLen);
+}
+
+void flushStdin() {
+#ifdef _WIN32
+    fflush(stdin);
+#elif defined(__linux__)
+    #ifdef __GLIBC__
+        __fpurge(stdin);
+    #else
+        fpurge(stdin);
+    #endif
+#endif 
+}
+
+void cutStr(char** str, unsigned short len) {
+    for (int i = len;; i++) {
+        if ((*str)[i] != '\0') {
+            (*str)[i] = '\0';
+        } else return;
+    }
 }
 
 bool validArrLen(unsigned short var, short success) {
-    if (!(var && success && var < MAX_ARR_LEN)) {
+    if (success == EOF) {
+        exitWithMsg();
+    } else if (!(var && success && var < MAX_ARR_LEN)) {
         printf("Please enter a valid value: ");
         return false;
-    } else if (success == EOF) {
-        printf("End of input detected. Closing program.\n");
-        exit(0);
     }
     return true;
 }
 
 bool validStrLen(unsigned short var, short success) {
-    if (!(var && success && var < MAX_STR_LEN)) {
+    if (success == EOF) {
+        exitWithMsg();
+    } else if (!(var && success && var < MAX_STR_LEN)) {
         printf("Please enter a valid value: ");
         return false;
-    } else if (success == EOF) {
-        printf("End of input detected. Closing program.\n");
-        exit(0);
     }
     return true;
 }
 
 bool validStr(char* str, unsigned short len, short success) {
     if (success == EOF) {
-        printf("End of input detected. Closing program.\n");
-        exit(0);
-    } else if (success) {
-        for (int i = 0; i < len; i++) {
-            if (str[i] == '\0') {
-                printf("Please enter a valid string: ");
-                return false;
-            } else if (str[i] == '\n') {
-                print("Fix yo shi vro");
-            }
-        }
+        exitWithMsg();
+    } else if (!success) {
+        printf("Please enter a valid string of length %d: ", len);
+        return false;
     }
     return true;
 }
 
-bool endInput() {
-    char ch;
-    printf("Press Ctrl+D to end program. Enter any key to continue: ");
-    ch = getchar();
-    if (ch == EOF) {
-        printf("End of input detected. Closing program.\n");
-        return 1;
-    }
-    flush_stdin();
-    return 0;
+void exitWithMsg() {
+    printf("End of input detected. Closing program.\n");
+    exit(0);
 }
 
 bool strsAscendAlph(char* str1, char* str2) {
@@ -115,7 +134,7 @@ bool strsAscendAlph(char* str1, char* str2) {
 void sortStrsArr(char** arr, unsigned short arrLen) {
     char *temp;
     for (int i = 0; i < arrLen - 1; i++) {
-        for (int j = 0; j < arrLen - i; j++) {
+        for (int j = 0; j < arrLen - i - 1; j++) {
             if (!strsAscendAlph(arr[j], arr[j + 1]))
             {
                 temp = arr[j];
@@ -126,14 +145,24 @@ void sortStrsArr(char** arr, unsigned short arrLen) {
     }
 }
 
-void flushStdin() {
-#ifdef _WIN32
-    fflush(stdin);
-#elif defined(__linux__)
-    #ifdef __GLIBC__
-        __fpurge(stdin);
-    #else
-        fpurge(stdin);
-    #endif
-#endif 
+void printIndexedStrs(char** arr, unsigned short arrLen, unsigned short strLen) {
+    printf("i  | string\n");
+    printf("==============================\n");
+    for (int i = 0; i < arrLen; i++) {
+        printf("%-3d| %*s\n", i + 1, strLen, arr[i]);
+    }
+    printf("==============================\n");
+    printf("i  | string\n");
+}
+
+bool endInput() {
+    char ch;
+    printf("Press Ctrl+D to end program. Enter any key to continue: ");
+    ch = getchar();
+    if (ch == EOF) {
+        printf("End of input detected. Closing program.\n");
+        return 1;
+    }
+    flushStdin();
+    return 0;
 }
