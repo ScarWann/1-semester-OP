@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <string.h>
 #ifdef _WIN32
     #include <conio.h>
 #else
@@ -15,20 +14,20 @@
 void loop();
 bool validArrLen(unsigned short var, short success);
 bool validStrLen(unsigned short var, short success);
-bool validStr(char* str, unsigned short len, short success);
-void cutStr(char** str, unsigned short len);
+bool validStr(char* str);
+void cleanStr(char* str);
 void exitWithMsg();
-void printIndexedStrs(char** arr, unsigned short arrLen, unsigned short strLen);
+void printIndexedStrs(char** arr, unsigned short arrLen);
 bool strsAscendAlph(char* str1, char* str2);
 void sortStrsArr(char** arr, unsigned short arrLen);
 bool endInput();
 void flushStdin();
 
 int main() {
-    printf("Program for sorting strings in alphabetical order.\n"
+    printf("Program for sorting strings of standard ASCII characters in alphabetical order. Non-ASCII characters get treated as 2-4 characters by the program\n"
            "Entering extra chars will automatically cut them.\n"
            "Entering less chars than specified will treat the empty spaces as char 0 ('\\0')\n"
-           "You can press Ctrl+D to end the program at any time.\n");
+           "You can press Ctrl+D or enter an empty string to end the program.\n");
     do {
         loop();
     } while (!endInput());
@@ -51,21 +50,22 @@ void loop() {
         flushStdin();
     } while (!(validStrLen(strLen, success)));
 
-    char **arr = (char**)malloc(arrLen * (strLen + 1) * 4 * sizeof(char)); // Додаткове місце для \n й 4 байта для включення всіх символів UTF-8
+    char** arr = (char**)malloc(arrLen * strLen * sizeof(char*));
     for (int i = 0; i < arrLen; i++) {
-        arr[i] = (char*)malloc((strLen + 1) * 4 * sizeof(char));
+        arr[i] = (char*)malloc(strLen  * sizeof(char));
         printf("Enter string number %d: ", i + 1);
+
         do {
-            //success = scanf("%s", arr[i]);
-            fgets(arr[i], strLen + 1, stdin);
+            if(!fgets(arr[i], strLen + 1, stdin)) exitWithMsg();
+
+            cleanStr(arr[i]);
             flushStdin();
-            //cutStr(&arr[i], strLen);
-        } while (0/*!validStr(arr[i], strLen, success*/);
+        } while (!validStr(arr[i]));
     }
     
     sortStrsArr(arr, arrLen);
 
-    printIndexedStrs(arr, arrLen, strLen);
+    printIndexedStrs(arr, arrLen);
 }
 
 void flushStdin() {
@@ -80,10 +80,11 @@ void flushStdin() {
 #endif 
 }
 
-void cutStr(char** str, unsigned short len) {
-    for (int i = len;; i++) {
-        if ((*str)[i] != '\0') {
-            (*str)[i] = '\0';
+void cleanStr(char* str) {
+    for (int i = strlen(str);; i--) {
+        if (str[i] == '\0') continue;
+        if (str[i] == '\n') {
+            str[i] = '\0';
         } else return;
     }
 }
@@ -91,7 +92,7 @@ void cutStr(char** str, unsigned short len) {
 bool validArrLen(unsigned short var, short success) {
     if (success == EOF) {
         exitWithMsg();
-    } else if (!(var && success && var < MAX_ARR_LEN)) {
+    } else if (!(var && success && var < MAX_ARR_LEN && var > 1)) {
         printf("Please enter a valid value: ");
         return false;
     }
@@ -108,12 +109,9 @@ bool validStrLen(unsigned short var, short success) {
     return true;
 }
 
-bool validStr(char* str, unsigned short len, short success) {
-    if (success == EOF) {
+bool validStr(char* str) {
+    if (str[0] == 0) {
         exitWithMsg();
-    } else if (!success) {
-        printf("Please enter a valid string of length %d: ", len);
-        return false;
     }
     return true;
 }
@@ -124,7 +122,7 @@ void exitWithMsg() {
 }
 
 bool strsAscendAlph(char* str1, char* str2) {
-    if (strcmp(str1, str2) > 0) {
+    if (strcasecmp(str1, str2) > 0) {
         return false;
     } else {
         return true;
@@ -145,11 +143,11 @@ void sortStrsArr(char** arr, unsigned short arrLen) {
     }
 }
 
-void printIndexedStrs(char** arr, unsigned short arrLen, unsigned short strLen) {
+void printIndexedStrs(char** arr, unsigned short arrLen) {
     printf("i  | string\n");
     printf("==============================\n");
     for (int i = 0; i < arrLen; i++) {
-        printf("%-3d| %*s\n", i + 1, strLen, arr[i]);
+        printf("%-3d| %s\n", i + 1, arr[i]);
     }
     printf("==============================\n");
     printf("i  | string\n");

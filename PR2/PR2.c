@@ -43,13 +43,19 @@ void loop() {
     double temp = 0;
 
     printf("Please enter the value of line AB (%.0e to %.0e): ", MIN_LENGTH, MAX_LENGTH);
-    do {a = extraScanf();} while (!validLength(a));
+    do {
+        a = extraScanf();
+    } while (!validLength(a));
 
     printf("Please enter the value of line AC (%.0e to %.0e): ", MIN_LENGTH, MAX_LENGTH);
-    do {b = extraScanf();} while (!validLength(b));
+    do {
+        b = extraScanf();
+    } while (!validLength(b));
 
     printf("Please enter the value of line BC (%.0e to %.0e): ", MIN_LENGTH, MAX_LENGTH);
-    do {c = extraScanf();} while (!validLength(c));
+    do {
+        c = extraScanf();
+    } while (!validLength(c));
 
     if(!validTriangle(a, b, c)) {
         printf("The sides do not form a valid triangle. Please reenter the numbers correctly\n");

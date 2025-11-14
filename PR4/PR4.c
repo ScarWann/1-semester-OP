@@ -43,19 +43,19 @@ int main() {
 
 void loop() {
     float x1 = 0;
-    printf("Enter x1 (in degrees) in range [%.0e, %.0e]: ", MIN_X, MAX_X);
+    printf("Enter x1 (in degrees) in absolute range [%.0e, %.0e]: ", MIN_X, MAX_X);
     do {
         x1 = extraScanf();
     } while (!validX(x1));
 
     float x2 = 0;
-    printf("Enter x2 (in degrees) in range [%.0e, %.0e]: ", MIN_X, MAX_X);
+    printf("Enter x2 (in degrees) in absolute range [%.0e, %.0e]: ", MIN_X, MAX_X);
     do {
         x2 = extraScanf();
     } while (!validX(x2));
 
     float d = 0;
-    printf("Enter step d (in degrees) in range [%.0e, %.0e]: ", MIN_D, MAX_D);
+    printf("Enter step d (in degrees) in absolute range [%.0e, %.0e]: ", MIN_D, MAX_D);
     do {
         d = extraScanf();
     } while (!validDelta(d));
