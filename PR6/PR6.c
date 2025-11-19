@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <math.h>
+#include <wchar.h>
 #ifdef _WIN32
     #include <conio.h>
 #else
@@ -10,65 +11,83 @@
 
 
 #define MAX_MAT_SIZE 100
+#define MAX_DIGITS 14
 
 void loop();
-bool validArrLen(unsigned short var, short success);
-bool validStrLen(unsigned short var, short success);
-bool validStr(char* str);
-void cleanStr(char** str);
-void mallocError();
-void exitWithMsg();
-void printIndexedStrs(char** arr, unsigned short arrLen);
-bool strsAscendAlph(char* str1, char* str2);
-void sortStrsArr(char** arr, unsigned short arrLen);
-bool endInput();
+double** SoLAEInput();
+double* solveSoLAE(double** SoLAE);
+void outputSolutions(double* solutions);
 void flushStdin();
-
-struct SoLAE {
-    float** SoLAE;
-    short inputStatus;
-};
+bool userExit();
+void* EOFexit();
+wchar_t subscriptNumber(int ch);
 
 int main() {
-    printf("Program for computing the solution of SoLAEs (systems of linear algebraic eqations)\n"
-           "You can exit by pressing Ctrl+D at any time\n");
-
-    bool userExit = false;
+    printf("\nProgram for computing the solution of SoLAEs (systems of linear algebraic eqations)\n"
+           "You can exit by pressing Ctrl+D at any time\n\n"
+           "               Input form:\n"
+           "┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n"
+           "┃ A₁₀ + A₁₁x₁ + A₁₂x₂ + ... + A₁ᵢxᵢ = 0 ┃\n"
+           "┃ A₂₀ + A₂₁x₁ + A₂₂x₂ + ... + A₂ᵢxᵢ = 0 ┃\n"
+           "┃            .                  .     . ┃\n"
+           "┃            .                  .     . ┃\n"
+           "┃            .                  .     . ┃\n"
+           "┃ Aⱼ₀ + Aⱼ₁x₁ + Aⱼ₂x₂ + ... + Aⱼᵢxᵢ = 0 ┃\n"
+           "┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n\n"
+        
+        );
 
     do {
-        float** SoLAE = SoLAEInput();
-        float* solutions = SolveSoLAE(SoLAE);
+        double** SoLAE = SoLAEInput();
+        if (SoLAE == NULL) return EXIT_SUCCESS;
+        double* solutions = solveSoLAE(SoLAE);
         outputSolutions(solutions);
 
-    } while (!userExit);
+    } while (!userExit());
     return EXIT_SUCCESS;
 }
 
-void loop() {
+double** SoLAEInput() {
     short success = 0;
     short unsigned matrixSize = 0;
-    printf("Enter the size of the matrix (must be an integer less than or equal to %d): ", MAX_MAT_SIZE);
+    printf("Enter the size of the SoLAE (must be an integer less than or equal to %d): ", MAX_MAT_SIZE);
     do {
         success = scanf("%hu", &matrixSize);
         flushStdin();
-    } while (!(validArrLen(matrixSize, success)));
+        if (success == EOF) return EOFexit();
+    } while (!success);
 
-    float** matrix = (float**)malloc(pow(matrixSize, 2) * sizeof(float*));
-    if (matrix == NULL) mallocError();
+
+    double** matrix = (double**)malloc(matrixSize * sizeof(double*));
+    if (matrix == NULL) {
+        printf("Memory allocation error. Aborting program.\n");
+        return NULL;
+    }
 
     for (int i = 0; i < matrixSize; i++) {
-        matrix[i] = (float*)malloc(matrixSize  * sizeof(float));
-        for (int j = 0; j < matrixSize; i++) {
-            printf("Enter number with inexi %d, %d (vertical, horizontal coords): ", i + 1, j + 1);
+        matrix[i] = (double*)malloc((matrixSize + 1)  * sizeof(double));
+        for (int j = 0; j < matrixSize + 1; j++) {
+            printf("Enter coeficient a_%hu_%hu (vertical, horizontal coords): ", i + 1, j);
             do {
-                scanf("%d", &arr[i])
-            } while (!validStr(arr[i]));
+                success = scanf("%lf", &matrix[i][j]);
+                if(success == EOF) return EOFexit();
+                if(!success) {
+                    printf("Please enter a valid number: ");
+                }
+            } while (!success);
         }
     }
-    
-    sortStrsArr(arr, arrLen);
 
-    printIndexedStrs(arr, arrLen);
+    return matrix;
+}
+
+double* solveSoLAE(double** SoLAE) {
+    double* temp = (double)malloc(sizeof(SoLAE) / );
+    return temp;
+}
+
+void outputSolutions(double* solution) {
+    for (short i = 0; i < sizeof(*solution) / sizeof(double); i++) wprintf("X_%ls: %lf", subscriptNumber(i), solution[i]);
 }
 
 void flushStdin() {
@@ -83,28 +102,16 @@ void flushStdin() {
 #endif 
 }
 
-
-bool validArrLen(unsigned short var, short success) {
-    if (success == EOF) {
-        exitWithMsg();
-    } else if (!(var && success && var < MAX_MAT_SIZE)) {
-        printf("Please enter a valid value: ");
-        return false;
-    }
-    return true;
+wchar_t subscriptNumber(int ch) {
+    return ch + 0x2080;
 }
 
-void mallocError() {
-    print("Memory allocation error. Aborting program.\n");
-    exit(EXIT_FAILURE);
+void* EOFexit() {
+    printf("End of input detected. Closing program gracefully.\n");
+    return NULL;
 }
 
-void exitWithMsg() {
-    printf("End of input detected. Closing program.\n");
-    exit(EXIT_SUCCESS);
-}
-
-bool endInput() {
+bool userExit() {
     char ch;
     printf("Press Ctrl+D to end program. Enter any key to continue: ");
     ch = getchar();
