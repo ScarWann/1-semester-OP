@@ -10,11 +10,11 @@ extern void interaction_cycle(void);
 extern inline bool valid_e(double e);
 extern inline bool valid_k(double k);
 extern inline bool valid_x(double x, double e, short k);
-extern double root(double x, int k, double e, unsigned short precision);
+extern double root(double x, int k, double e);
 
 static double extra_scanf(void);
 static bool end_input(void);
 static inline void flush_stdin(void);
-static inline double root_(double x, int k, double e, unsigned short precision, double *out);
+static inline double root_(double x, int k, double e, int *iters);
 
 #endif

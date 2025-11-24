@@ -11,16 +11,19 @@
 
 
 
-int main() {
+int main(void) {
     printf("Program for calculating square roots up to a certain precision.\n"
-           "You can exit at any time by pressing Ctrl+D\n");
+           "You can exit at any time by pressing Ctrl+D\n"
+           "Values will be rounded down for positive k, in case rounding is needed (simply nature of the algorithm, not a deliberate design choice)\n"
+           "The opposite is true for negative k\n"
+           "Long detailed explanation: For all k the result will be equal to the most precise value such that the calculated power will have the largest possible value less than the specified x)\n");
     do {
         interaction_cycle();
     } while (!end_input());
     return EXIT_SUCCESS;
 }
 
-void interaction_cycle() {
+extern void interaction_cycle(void) {
     bool success; 
 
     double e = 0;
@@ -34,7 +37,7 @@ void interaction_cycle() {
     
     double temp = 0;
     int k = 0;
-    printf("Enter k (must be an integer less than or equal to %.0e): ", MAX_K);
+    printf("Enter k (must be an integer with an absolute value of less than or equal to %.0e): ", MAX_K);
     do {
         temp = extra_scanf();
         success = valid_k(temp);
@@ -51,7 +54,7 @@ void interaction_cycle() {
     } while (!success);
 
     if (x && x != 1) {
-        printf("The final root value is %.*lf\n", precision, root(x, k, e, precision));
+        printf("The final root value is %.*lf\n", precision, root(x, k, e));
     } else {
         printf("The final root value is %.*lf\n", precision, x);
     }
@@ -73,7 +76,7 @@ extern inline bool valid_k(double k) {
 }
 
 
-static double extra_scanf() {
+static double extra_scanf(void) {
     short success = 0;
     double result = 0;
     success = scanf("%lf", &result);
@@ -87,7 +90,7 @@ static double extra_scanf() {
     return result;
 }
 
-static bool end_input() {
+static bool end_input(void) {
     char ch;
     printf("Press Ctrl+D to end program. Enter any key to continue: ");
     ch = getchar();
@@ -111,26 +114,26 @@ static void inline flush_stdin(void) {
 #endif 
 }
 
-double root(double x, int k, double e, unsigned short precision) {
+extern double root(double x, int k, double e) {
     double out;
     unsigned int iters;
     if (k > 0) {
-        iters = root_(x, k, e, precision, &out);
+        out = root_(x, k, e, &iters);
     } else {
-        iters = root_(1./x, -k, e, precision, &out);
+        out = root_(1./x, -k, e, &iters);
     }
     printf("Calculation finished in %d iterations\n", iters);
     return out;
 }
 
-static inline double root_(double x, int k, double e, unsigned short precision, double *out) {
+static inline double root_(double x, int k, double e, int *iters) {
     double y = 1, d = 1;
     unsigned int i = 0;
-    while (fabs(d) > e) {
+    do {
         d = (x / pow(y, k - 1) - y) / k;
         y += d;
         i++;
-    }
-    *out = y;
-    return i;
+    } while (fabs(d) > e);
+    *iters = i;
+    return y;
 }
