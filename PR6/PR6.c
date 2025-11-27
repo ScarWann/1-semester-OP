@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 #ifdef _WIN32
     #include <conio.h>
 #else
@@ -10,13 +11,24 @@
     #include <termios.h>
 #endif
 
-#define MAX_MAT_SIZE 100
+
+
+#define MAX_MAT_SIZE 10
 #define MIN_MAT_SIZE 2
 
-#define MAX_PRECISION 1e-1
-#define MIN_PRECISION 1e-14
+#define MAX_PRECISION 14
+#define MIN_PRECISION 1
 
 #define MAX_ITERS 100000
+
+#
+
+#define EOT 4
+/* 
+ * Although EOF is -1, and most input funcs return it on ^D on POSIX systems, 4 (EOT) is the actual control char index of it (^D)
+ * Windows, however, always returns EOT (4) on ^D, instead of EOF (-1)
+ * The return value of scanf() is always -1 on both platforms
+ */
 
 enum EXIT_STATUS {
     OK,
@@ -38,7 +50,7 @@ static void huconditional_input(unsigned short *out, bool (condition(unsigned sh
 static void lfconditional_input(double *out, bool (condition(double val)), char *errmsg);
 static void coef_input_msg(unsigned int i, unsigned int j);
 static void print_subscript(unsigned int n);
-static void output_solutions(double* solution);
+static void output_solutions(double* solution, unsigned short precision, unsigned short size);
 
 static bool valid_size(unsigned short size);
 static bool valid_coef(double coef);
@@ -51,7 +63,7 @@ static int getch(void);
 
 static bool user_exit(void);
 static void inline flush_stdin(void);
-static void delete_ptr(void *ptr);
+static void inline delete_ptr(void *ptr);
 
 
 
@@ -103,12 +115,13 @@ int main(void) {
         }
 
         short unsigned precision;
+        printf("Enter the precision (amount of digits, as an integer) in range %d to %d: ", MIN_PRECISION, MAX_PRECISION);
         huconditional_input(&precision, &valid_precision, 
                             "Please enter the precision as an integer in the specified range: ");
         if (precision == 0) return EXIT_SUCCESS;
 
         double* solutions = solve_SoLAE(SoLAE, pow(0.1, precision), mat_size);
-        if (solutions != NULL) output_solutions(solutions);
+        if (solutions != NULL) output_solutions(solutions, precision, mat_size);
         delete_ptr(SoLAE);
 
     } while (!user_exit());
@@ -118,7 +131,7 @@ int main(void) {
 // EXTERNS
 
 void SoLAE_input(double **ptr, unsigned short mat_size, enum EXIT_STATUS *exit_code) {
-    printf()
+    printf("Enter the value of the SoLAE coeficients\n");
     for (unsigned short i = 0; i < mat_size; i++) {
         short success;
         ptr[i] = (double*)malloc((mat_size + 1)  * sizeof(double));
@@ -183,7 +196,7 @@ bool valid_SoLAE(double **SoLAE, unsigned size) {
 
 // MATH
 
-static double max_delta(double *ptr1, double *ptr2, unsigned short size) {
+static inline double max_delta(double *ptr1, double *ptr2, unsigned short size) {
     double res = 0;
     for (int i = 0; i < size; i++) {
         res = (res < abs(ptr1[i] - ptr2[i])) ? abs(ptr1[i] - ptr2[i]) : res;
@@ -191,17 +204,17 @@ static double max_delta(double *ptr1, double *ptr2, unsigned short size) {
     return res;
 }
 
-static void replace_arr_vals(double *src, double *dest, unsigned size) {
+static inline void replace_arr_vals(double *src, double *dest, unsigned size) {
     for (int i = 0; i < size; i++) dest[i] = src[i];
 }
 
-static double sum_arr_muls(double *ptr1, double *ptr2, unsigned size) {
+static inline double sum_arr_muls(double *ptr1, double *ptr2, unsigned size) {
     double sum = 0;
     for (int i = 0; i < size; i++) sum += ptr1[i+1] * ptr2[i];
     return sum;
 }
 
-static double abs_sum(double *row, unsigned short size) {
+static inline double abs_sum(double *row, unsigned short size) {
     double result = 0;
     for (int i = 0; i < size; i++) {
         result += abs(row[i]);
@@ -275,20 +288,20 @@ static void print_subscript(unsigned int n) {
     }
 }
 
-static void output_solutions(double* solution) {
-    for (short i = 0; i < sizeof(*solution) / sizeof(double); i++) {
-        printf("X_");
+static void output_solutions(double* solution, unsigned short precision, unsigned short size) {
+    for (short i = 0; i < size; i++) {
+        printf("X");
         print_subscript(i);
-        printf(": %lf\n", solution[i]);
+        printf(": %.*lf\n", precision, solution[i]);
     }
 }
 
 static bool user_exit(void) {
     char ch;
-    printf("Press Ctrl+D to end program. Enter any key to continue: ");
+    printf("Press Ctrl+D to end program. Enter any key to continue\n");
     ch = getch();
     flush_stdin();
-    if (ch == EOF) {
+    if (ch == EOT) { 
         printf("End of input detected. Closing program.\n");
         return true;
     }
@@ -311,6 +324,8 @@ static bool valid_precision(unsigned short precision) {
 
 // MISC
 
+
+
 #ifndef _WIN32
 static int getch(void) {
     struct termios old, new;
@@ -318,7 +333,7 @@ static int getch(void) {
     
     tcgetattr(STDIN_FILENO, &old);
     new = old;
-    new.c_lflag &= ~(ICANON);
+    new.c_lflag &= ~(ICANON | ECHO);
     tcsetattr(STDIN_FILENO, TCSANOW, &new);
     
     ch = getchar();
@@ -340,7 +355,12 @@ static void inline flush_stdin(void) {
 #endif 
 }
 
-static void delete_ptr(void *ptr) {
+static inline void delete_ptr(void *ptr) {
     free(ptr);
     ptr = NULL;
+}
+
+static inline double random(double floor, double ceil) {
+    srand(time(NULL));
+    return rand();
 }
