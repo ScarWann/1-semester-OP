@@ -2,26 +2,60 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <math.h>
-#include <wchar.h>
 #ifdef _WIN32
     #include <conio.h>
 #else
     #include <stdio_ext.h>
+    #include <unistd.h>
+    #include <termios.h>
 #endif
 
-
 #define MAX_MAT_SIZE 100
-#define MAX_DIGITS 14
+#define MIN_MAT_SIZE 2
 
-void loop();
-double** SoLAE_input();
-double* solve_SoLAE(double** SoLAE);
-void output_solutions(double* solutions);
-void flush_stdin();
-bool user_exit();
-void* EOF_exit();
+#define MAX_PRECISION 1e-1
+#define MIN_PRECISION 1e-14
 
-int main() {
+#define MAX_ITERS 100000
+
+enum EXIT_STATUS {
+    OK,
+    MALLOC_ERR,
+    EOF_EXIT
+};
+
+void SoLAE_input(double **ptr, unsigned short mat_size, enum EXIT_STATUS *exit_code);
+double *solve_SoLAE(double **SoLAE, double epsilon, unsigned size);
+bool valid_SoLAE(double **SoLAE, unsigned size);
+
+static double max_delta(double *ptr1, double *ptr2, unsigned short size);
+static void replace_arr_vals(double *src, double *dest, unsigned size);
+static double sum_arr_muls(double *ptr1, double *ptr2, unsigned size);
+static double abs_sum(double *row, unsigned short size);
+
+static bool bool_input();
+static void huconditional_input(unsigned short *out, bool (condition(unsigned short val)), char *errmsg);
+static void lfconditional_input(double *out, bool (condition(double val)), char *errmsg);
+static void coef_input_msg(unsigned int i, unsigned int j);
+static void print_subscript(unsigned int n);
+static void output_solutions(double* solution);
+
+static bool valid_size(unsigned short size);
+static bool valid_coef(double coef);
+static bool valid_precision(unsigned short precision);
+
+
+#ifndef _WIN32
+static int getch(void);
+#endif
+
+static bool user_exit(void);
+static void inline flush_stdin(void);
+static void delete_ptr(void *ptr);
+
+
+
+int main(void) {
     printf("\nProgram for computing the solution of SoLAEs (systems of linear algebraic eqations)\n"
            "You can exit by pressing Ctrl+D at any time\n\n"
            "               Input form:\n"
@@ -37,98 +71,185 @@ int main() {
         );
 
     do {
-        double** SoLAE = SoLAEInput();
-        if (SoLAE == NULL) return EXIT_SUCCESS;
-        double* solutions = solveSoLAE(SoLAE);
-        outputSolutions(solutions);
+        unsigned short mat_size;
+        printf("Enter matrix size in range %u to %u: ", MIN_MAT_SIZE, MAX_MAT_SIZE);
+        huconditional_input(&mat_size, &valid_size,
+                            "Please enter the size as an integer in the specified range: ");
+        if (mat_size == 0) return EXIT_SUCCESS;
+        
 
-    } while (!userExit());
+        double** SoLAE = (double**)malloc(mat_size * sizeof(double*));
+        if (SoLAE == NULL) {
+            printf("Memory allocation error. Try another matrix size\n");
+            continue;
+        }
+        enum EXIT_STATUS exit_code = OK;
+        SoLAE_input(SoLAE, mat_size, &exit_code);
+        if (exit_code != OK) delete_ptr(SoLAE);
+        switch (exit_code)
+        {
+        case MALLOC_ERR:
+            printf("Memory allocation error. Try again");
+            continue;
+        case EOF_EXIT:
+            printf("End of input detected. Exiting program gracefully.\n");
+            return EXIT_SUCCESS;
+        }
+
+        if (!valid_SoLAE(SoLAE, mat_size)) {
+            printf("Gauss-Seidel method not applicable for this SoLAE\n");
+            delete_ptr(SoLAE);
+            continue;
+        }
+
+        short unsigned precision;
+        huconditional_input(&precision, &valid_precision, 
+                            "Please enter the precision as an integer in the specified range: ");
+        if (precision == 0) return EXIT_SUCCESS;
+
+        double* solutions = solve_SoLAE(SoLAE, pow(0.1, precision), mat_size);
+        if (solutions != NULL) output_solutions(solutions);
+        delete_ptr(SoLAE);
+
+    } while (!user_exit());
     return EXIT_SUCCESS;
 }
 
-double** SoLAE_input() {
-    short success = 0;
-    short unsigned matrixSize = 0;
-    printf("Enter the size of the SoLAE (must be an integer less than or equal to %d): ", MAX_MAT_SIZE);
-    do {
-        success = scanf("%hu", &matrixSize);
-        flushStdin();
-        if (success == EOF) return EOFexit();
-    } while (!success);
+// EXTERNS
 
-
-    double** matrix = (double**)malloc(matrixSize * sizeof(double*));
-    if (matrix == NULL) {
-        printf("Memory allocation error. Aborting program.\n");
-        return NULL;
-    }
-
-    for (int i = 0; i < matrixSize; i++) {
-        matrix[i] = (double*)malloc((matrixSize + 1)  * sizeof(double));
-        for (int j = 0; j < matrixSize + 1; j++) {
-            printf("Enter coeficient a_%hu_%hu (vertical, horizontal coords): ", i + 1, j);
-            do {
-                success = scanf("%lf", &matrix[i][j]);
-                if(success == EOF) return EOFexit();
-                if(!success) {
-                    printf("Please enter a valid number: ");
-                }
-            } while (!success);
+void SoLAE_input(double **ptr, unsigned short mat_size, enum EXIT_STATUS *exit_code) {
+    printf()
+    for (unsigned short i = 0; i < mat_size; i++) {
+        short success;
+        ptr[i] = (double*)malloc((mat_size + 1)  * sizeof(double));
+        if (ptr[i] == NULL) {
+            *exit_code = MALLOC_ERR;
+            return;
+        }
+        for (unsigned short j = 0; j < mat_size + 1; j++) {
+            coef_input_msg(i + 1, j);
+            lfconditional_input(&ptr[i][j], &valid_coef,
+                                "Please enter the coeficient in the valid range: ");
         }
     }
-
-    return matrix;
+    return;
 }
 
-double* solve_SoLAE(double** SoLAE, unsigned size) {
+double *solve_SoLAE(double **SoLAE, double epsilon, unsigned size) {
     double *bs = (double*)malloc(sizeof(double) * size);
+    if (bs == NULL) return NULL;
     for (int i = 0; i < size; i++) {
         bs[i] = -SoLAE[i][0];
     }
+    
+    double *xs = (double*)malloc(sizeof(double) * size);
+    if (xs == NULL) {
+        delete_ptr(bs);
+        return NULL;
+    }
+    for (int i = 0; i < size; i++) {
+        xs[i] = bs[i] / SoLAE[i][i+1];
+    }
 
     double *xps = (double*)malloc(sizeof(double) * size);
-    for (int i = 0; i < size; i++) {
-        xps[i] = bs[i] / SoLAE[i][i+1];
+    if (xps == NULL) {
+        delete_ptr(bs);
+        delete_ptr(xs);
+        return NULL;
     }
-    double *xs = (double*)malloc(sizeof(double) * size);
+
+
+    unsigned iters = 0; 
+    do {
+        replace_arr_vals(xs, xps, size);
+        for (int i = 0; i < size; i++) {
+            xs[i] = (bs[i] + SoLAE[i][i+1] * xs[i] 
+                    - sum_arr_muls(SoLAE[i], xs, size))
+                    / SoLAE[i][i+1];
+        }
+        iters++;
+    } while (max_delta(xs, xps, size) > epsilon && iters < MAX_ITERS);
     return xs;
 }
 
 bool valid_SoLAE(double **SoLAE, unsigned size) {
     for (int i = 0; i < size; i++) {
         if (SoLAE[i][i+1] == 0) return false;
-        if (sum(SoLAE[i], size) > SoLAE[i][i+1] * 2) return false;
+        if (abs_sum(SoLAE[i], size) > SoLAE[i][i+1] * 2) return false;
     }
 
     return true;
 }
 
-static double arrmulsum(double *row, double ) {
+// MATH
 
+static double max_delta(double *ptr1, double *ptr2, unsigned short size) {
+    double res = 0;
+    for (int i = 0; i < size; i++) {
+        res = (res < abs(ptr1[i] - ptr2[i])) ? abs(ptr1[i] - ptr2[i]) : res;
+    }
+    return res;
 }
 
-static double sum(double *row, unsigned short size){
+static void replace_arr_vals(double *src, double *dest, unsigned size) {
+    for (int i = 0; i < size; i++) dest[i] = src[i];
+}
+
+static double sum_arr_muls(double *ptr1, double *ptr2, unsigned size) {
+    double sum = 0;
+    for (int i = 0; i < size; i++) sum += ptr1[i+1] * ptr2[i];
+    return sum;
+}
+
+static double abs_sum(double *row, unsigned short size) {
     double result = 0;
     for (int i = 0; i < size; i++) {
-        result += row[i];
+        result += abs(row[i]);
     }
     return result;
 }
 
-void output_solutions(double* solution) {
-    for (short i = 0; i < sizeof(*solution) / sizeof(double); i++) wprintf("X_%ls: %lf", subscriptNumber(i), solution[i]);
+// I/O
+
+static bool bool_input() {
+    return getch() != '0';
 }
 
-void flush_stdin() {
-#ifdef _WIN32
-    fflush(stdin);
-#elif defined(__linux__)
-    #ifdef __GLIBC__
-        __fpurge(stdin);
-    #else
-        fpurge(stdin);
-    #endif
-#endif 
+static void huconditional_input(unsigned short *out, bool (condition(unsigned short val)), char *errmsg) {
+    short success;
+    do {
+        success = scanf("%hu", out);
+        flush_stdin();
+        if (success == EOF) {
+            printf("End of input detected. Exiting program gracefully.\n");
+            *out = 0;
+            return;
+        }  else if (!(success && condition(*out))) {
+            printf("%s", errmsg);
+        }
+    } while (!(success && condition(*out)));
+}
+
+static void lfconditional_input(double *out, bool (condition(double val)), char *errmsg) {
+    short success;
+    do {
+        success = scanf("%lf", out);
+        flush_stdin();
+        if (success == EOF) {
+            printf("End of input detected. Exiting program gracefully.\n");
+            *out = NAN;
+            return;
+        }  else if (!(success && condition(*out))) {
+            printf("%s", errmsg);
+        }
+    } while (!(success && condition(*out)));
+}
+
+static void coef_input_msg(unsigned int i, unsigned int j) {
+    printf("Enter coeficient A");
+    print_subscript(i);
+    print_subscript(j);
+    printf(": ");
 }
 
 static void print_subscript(unsigned int n) {
@@ -136,9 +257,9 @@ static void print_subscript(unsigned int n) {
         "₀", "₁", "₂", "₃", "₄", 
         "₅", "₆", "₇", "₈", "₉"
     };
-    
+
     if (n == 0) {
-        printf("%s", subscripts[0]);
+        printf("₀");
         return;
     }
     
@@ -154,19 +275,72 @@ static void print_subscript(unsigned int n) {
     }
 }
 
-void* EOFexit() {
-    printf("End of input detected. Closing program gracefully.\n");
-    return NULL;
+static void output_solutions(double* solution) {
+    for (short i = 0; i < sizeof(*solution) / sizeof(double); i++) {
+        printf("X_");
+        print_subscript(i);
+        printf(": %lf\n", solution[i]);
+    }
 }
 
-static bool user_exit() {
+static bool user_exit(void) {
     char ch;
     printf("Press Ctrl+D to end program. Enter any key to continue: ");
-    ch = getchar();
+    ch = getch();
+    flush_stdin();
     if (ch == EOF) {
         printf("End of input detected. Closing program.\n");
         return true;
     }
-    flushStdin();
     return false;
+}
+
+// VALIDATIONS
+
+static bool valid_size(unsigned short size) {
+    return size != 0 && size <= MAX_MAT_SIZE && size >= MIN_MAT_SIZE;
+}
+
+static bool valid_coef(double coef) {
+    return isfinite(coef);
+}
+
+static bool valid_precision(unsigned short precision) {
+    return precision <= MAX_PRECISION && precision >= MIN_PRECISION;
+}
+
+// MISC
+
+#ifndef _WIN32
+static int getch(void) {
+    struct termios old, new;
+    int ch;
+    
+    tcgetattr(STDIN_FILENO, &old);
+    new = old;
+    new.c_lflag &= ~(ICANON);
+    tcsetattr(STDIN_FILENO, TCSANOW, &new);
+    
+    ch = getchar();
+    
+    tcsetattr(STDIN_FILENO, TCSANOW, &old);
+    return ch;
+}
+#endif
+
+static void inline flush_stdin(void) {
+#ifdef _WIN32
+    fflush(stdin);
+#elif defined(__linux__)
+    #ifdef __GLIBC__
+        __fpurge(stdin);
+    #else
+        fpurge(stdin);
+    #endif
+#endif 
+}
+
+static void delete_ptr(void *ptr) {
+    free(ptr);
+    ptr = NULL;
 }
