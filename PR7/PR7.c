@@ -85,7 +85,7 @@ void solve_div(double func(double x, double y), double y, double a, double b, do
 
     if (isnan(sol)) {
         printf("%s", CALC_FAIL_NAN);
-    }else if (sol - e > a && sol + e < b) {
+    }else if (sol - e > a || sol + e < b) {
         printf("%s", CALC_FAIL_RANG);
     } else {
         printf(CALC_SUCC, sol);

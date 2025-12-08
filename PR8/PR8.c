@@ -68,95 +68,59 @@ int main(void) {
     return EXIT_SUCCESS;
 }
 
+// CIRCUITS
+// Params are as follows: omega, L, C, R(1), (R2)
+
+static struct complex* circuit1(double *ps) {
+    struct complex* n;
+    struct complex* d;
+    n->re = L / C;
+    n->im = -R / omega / C;
+    d->re = R;
+    d->im = omega*L - 1 / omega / C;
+    return cdiv(n, d);
+}
+
+static struct complex* circuit2(double *ps) {
+    struct complex* n;
+    struct complex* d;
+    n->re = L / C;
+    n->im = R / omega / C;
+    d->re = R;
+    d->im = omega * L - 1 / omega / C;
+    return cdiv(n, d);
+}
+
+static struct complex* circuit3(double *ps) {
+    struct complex* n;
+    struct complex* d;
+    n->re = R1 * R2;
+    n->im = R1 * (omega * L - 1 / omega / L);
+    d->re = R1 + R2;
+    d->im = omega * L - 1 / omega / C;
+    return cdiv(n, d);
+}
+
+static struct complex* circuit4(double *ps) {
+    struct complex* n;
+    struct complex* d;
+    n->re = R1 * R2 + L / C;
+    n->im = R1 * (omega * L * R1 - R2 / omega / L);
+    d->re = R1 + R2;
+    d->im = omega * L - 1 / omega / C;
+    return cdiv(n, d);
+}
+
 // MATH
 
-static double func1(double x, double y) {
-    return cos(y/x) - 2. * sin(1./x) + 1./x;
-}
-
-static double func2(double x, double y) {
-    return sin(log(x)) - cos(log(x)) + y * log(x);
-}
-
-void solve_div(double func(double x, double y), double y, double a, double b, double e) {
-    double sol;
-    double ta = a, tb = b;
-    do {
-        sol = (ta + tb) / 2.;
-        if (func(ta, y) * func(sol, y) > 0) {
-            ta = sol;
-        } else {
-            tb = sol;
-        }
-    } while ((fabs(ta - tb) > e) && !isnan(sol));
-
-    if (isnan(sol)) {
-        printf("%s", CALC_FAIL_NAN);
-    }else if (sol - e > a && sol + e < b) {
-        printf("%s", CALC_FAIL_RANG);
-    } else {
-        printf(CALC_SUCC, sol);
-    }
-}
-
-void solve_newt(double func(double x, double y), double y, double a, double b, double e) {
-    double sol = b;
-    double delta;
-    unsigned i = 0;
-    double dfval = derivative(func, sol, y);
-
-    do {
-        if (fabs(dfval) < M_EPS) break;
-        
-        delta = func(sol, y) / dfval;
-        sol -= delta;
-        
-        //if (sol < a || sol > b) return NAN;
-        i++; 
-    } while (fabs(delta) > e && i < MAX_ITERS && !isnan(sol));
-    
-    if (fabs(dfval) < M_EPS) {
-        printf("%s", CALC_FAIL_EPS);
-    } else if (isnan(sol)) {
-        printf("%s", CALC_FAIL_NAN);
-    } else if (sol - e > a && sol + e < b) {
-        printf("%s", CALC_FAIL_RANG);
-    } else if (i > MAX_ITERS) {
-        printf("%s", CALC_FAIL_ITER);
-    } else {
-        printf(CALC_SUCC, sol);
-    }
-}
-
-static double derivative(double func(double x, double y), double x, double y) {
-    return (func(x + M_EPS, y) - func(x - M_EPS, y)) / (2 * M_EPS);
+static struct complex* cdiv(struct complex *n, struct complex *d) {
+    struct complex* res;
+    res->re = (n->re * d->re + n->im * d->im) / (n->im * n->im + d->im * d->im);
+    res->im = (d->re * n->im + n->re * d->im) / (n->im * n->im + d->im * d->im);
+    return res;
 }
 
 // I/O
-
-static void* bool_choice(void *choice1, void *choice2, char* str_choice1, char* str_choice2) {
-    printf("Press the specified number to choose either option:\n"
-           "    1: %s\n"
-           "    2: %s\n",
-           str_choice1, str_choice2);
-    bool finished = false;
-    do {
-        switch (getch()) {
-            case '1':
-                printf("Option 1, '%s', chosen\n", str_choice1);
-                return choice1;
-            case '2':
-                printf("Option 2, '%s', chosen\n", str_choice2);
-                return choice2;
-            case EOT:
-                printf("%s\n", EXIT_EOT_MSG);
-                return NULL;
-            default:
-                printf("Unknown button pressed. Try again\n");
-                finished = false;
-        }
-    } while (!finished);
-}
 
 static void* mul_choice(void* *choices, char *keys, char* *str_choices) {
     print_choices(keys, str_choices);
@@ -179,6 +143,13 @@ static void print_choices(char *keys, char* *str_choices) {
     for (int i = 0; keys[i] != EOT; i++) {
         printf("%4c\n", keys[i]);
         printf("%s", str_choices[i]);
+    }
+}
+
+static void mul_poll(double *dest, char* *var_names, unsigned len) {
+    for (int i = 0; i < len; i++) {
+        printf("Please enter the %s: ", var_names[i]);
+        dest[i] = lfconditional_input(valid_param, var_names[i]);
     }
 }
 
@@ -212,16 +183,8 @@ static bool user_exit(void) {
 
 // VALIDATIONS
 
-static bool valid_boundary(double boundary) {
-    return fabs(boundary) <= SAMPLE_RANGE && isfinite(boundary);
-}
-
-static bool valid_y(double y) {
-    return fabs(y) <= MAX_Y && fabs(y) >= MIN_Y && isfinite(y);
-}
-
-static bool valid_epsilon(double epsilon) {
-    return epsilon <= MAX_EPSILON && epsilon >= MIN_EPSILON && isfinite(epsilon);
+static bool valid_param(double val) {
+    return isfinite(val) && val <= MAX_PARAM && val >= MIN_PARAM;
 }
 
 // MISC

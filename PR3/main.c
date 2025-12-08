@@ -126,7 +126,7 @@ extern double root(double x, int k, double e) {
     return out;
 }
 
-static inline double root_(double x, int k, double e, int *iters) {
+static double root_(double x, int k, double e, int *iters) {
     double y = 1, d = 1;
     unsigned int i = 0;
     do {

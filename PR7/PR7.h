@@ -2,21 +2,25 @@
 #define PR7
 
 
-#define SAMPLE_RANGE 1e10
+#define SAMPLE_RANGE 1e3
 
 #define MAX_EPSILON 1e-1
 #define MIN_EPSILON 1e-10
 
-#define MAX_Y 1e10
-#define MIN_Y -1e10
+#define MAX_Y 1e3
+#define MIN_Y -1e3
 
 #define MAX_ITERS 10000
 #define M_EPS 1e-14
 
+#ifndef _WIN32
 #define EOT 4
+#else
+#define EOT 26
+#endif
 /* 
  * Although EOF is -1, and most input funcs return it on ^D on POSIX systems, 4 (EOT) is the actual control char index of it (^D)
- * Windows, however, always returns EOT (4) on ^D if using getch()/getchar(), instead of EOF (-1)
+ * Windows, however, always returns 27 on ^Z if using getch()/getchar(), instead of EOF (-1). ^D does nothing most of the time
  * The return value of scanf() in this case is always -1 on both platforms
  */
 
@@ -24,8 +28,8 @@
 
 static double func1(double x, double y);
 static double func2(double x, double y);
-double solve_div(double func(double x, double y), double y, double a, double b, double e);
-double solve_newt(double func(double x, double y), double y, double a, double b, double e);
+void solve_div(double func(double x, double y), double y, double a, double b, double e);
+void solve_newt(double func(double x, double y), double y, double a, double b, double e);
 static double derivative(double func(double x, double y), double x, double y);
 
 static void* bool_choice(void *choice1, void *choice2, char* str_choice1, char* str_choice2);

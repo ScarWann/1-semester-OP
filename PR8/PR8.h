@@ -1,22 +1,44 @@
 #ifndef PR8
 #define PR8
 
-
-
 #ifndef _WIN32
 #define EOT 4
 #else
-#define EOT 27
+#define EOT 26
 #endif
 /* 
  * Although EOF is -1, and most input funcs return it on ^D on POSIX systems, 4 (EOT) is the actual control char index of it (^D)
- * Windows, however, always returns EOT (4) on ^Z if using getch()/getchar(), instead of EOF (-1). ^D does nothing most of the time
+ * Windows, however, always returns 27 on ^Z if using getch()/getchar(), instead of EOF (-1). ^D does nothing most of the time
  * The return value of scanf() in this case is always -1 on both platforms
  */
 
 typedef struct complex {
     double re;
     double im;
+};
+
+typedef enum circuit {
+    RL_C,
+    RC_L,
+    R2C_R1L,
+    R2_R1CL
+};
+
+#define DOUBLE_RES 2
+
+
+#define omega ps[0]
+#define L     ps[1]
+#define C     ps[2]
+#define R     ps[3]
+#define R1    ps[3]
+#define R2    ps[4]
+
+static const void* circuit_funcs[4] = {
+    circuit1,
+    circuit2,
+    circuit3,
+    circuit4
 };
 
 static double func1(double x, double y);

@@ -15,6 +15,6 @@ extern double root(double x, int k, double e);
 static double extra_scanf(void);
 static bool end_input(void);
 static inline void flush_stdin(void);
-static inline double root_(double x, int k, double e, int *iters);
+static double root_(double x, int k, double e, int *iters);
 
 #endif
